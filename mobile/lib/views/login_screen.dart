@@ -243,6 +243,34 @@ class _LoginScreenState extends State<LoginScreen>
                                         ),
                                 ),
                               ),
+
+                              const SizedBox(height: 16),
+
+                              // BYPASS BUTTON
+                              ElevatedButton(
+                                onPressed: () {
+                                  // Navigate directly to the main pets screen (or home)
+                                  Get.offAllNamed('/pets');
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.orange,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  elevation: 0,
+                                ),
+                                child: const Text(
+                                  'Bypass (No Backend)',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                         ),
