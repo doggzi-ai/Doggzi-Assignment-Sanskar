@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import '../models/pet.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://localhost:8000';
+  static const String baseUrl = 'https://dogzzi.onrender.com';
 
   static Map<String, String> getHeaders({String? token}) {
     Map<String, String> headers = {'Content-Type': 'application/json'};
