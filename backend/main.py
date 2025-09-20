@@ -2,7 +2,8 @@ from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 from pymongo import MongoClient
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
+from pydantic.networks import EmailStr
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
@@ -123,7 +124,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
 # API Routes
 @app.get("/")
 async def root():
-    return {"message": "Pet Management API is running!"}
+    return {"ok": True}
 
 
 @app.post("/auth/register", response_model=Token)
