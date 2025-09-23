@@ -1,8 +1,8 @@
-# Pet Management System
+# Pet Management System - Assignment Doggzi
 
 A full-stack application for managing pets, built with Flutter (mobile) and FastAPI (backend). This project demonstrates modern development practices with clean architecture, proper authentication, and intuitive user interface.
 
-## 🚀 Features
+## Features
 
 ### Mobile App (Flutter + GetX)
 
@@ -23,7 +23,7 @@ A full-stack application for managing pets, built with Flutter (mobile) and Fast
 - **CORS**: Configured for mobile app communication
 - **Documentation**: Auto-generated API documentation
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 InternProj/
@@ -45,7 +45,7 @@ InternProj/
 └── README.md              # This file
 ```
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### Backend
 
@@ -65,7 +65,7 @@ InternProj/
 - **HTTP** - API communication
 - **SharedPreferences** - Local data persistence
 
-## 📋 Prerequisites
+## Prerequisites
 
 ### Backend
 
@@ -79,7 +79,7 @@ InternProj/
 - Android Studio or VS Code with Flutter extensions
 - Android/iOS device or emulator
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Clone the Repository
 
@@ -143,7 +143,7 @@ flutter pub get
 flutter run
 ```
 
-## 📱 App Demo Flow
+## App Demo Flow
 
 1. **Launch App** → Splash screen with loading
 2. **Authentication** → Login or Register
@@ -186,7 +186,7 @@ flutter run
   }
   ```
 
-## 🔒 Authentication Flow
+## Authentication Flow
 
 1. User registers/logs in via mobile app
 2. Backend validates credentials and returns JWT token
@@ -194,7 +194,7 @@ flutter run
 4. Token is included in Authorization header for protected endpoints
 5. Backend validates token for each protected request
 
-## 📊 Database Schema
+## Database Schema
 
 ### Users Collection
 
@@ -241,7 +241,7 @@ flutter run
 - Test input validation
 - Test network error handling
 
-## 🎯 Key Features Implemented
+## Key Features Implemented
 
 ✅ **Authentication System**
 
@@ -285,7 +285,7 @@ flutter run
 6. Error handling implementation
 7. Documentation and README creation
 
-## 📈 Future Enhancements
+## Future Enhancements
 
 - [ ] Pet photo upload and storage
 - [ ] Edit and delete pet functionality
@@ -298,7 +298,7 @@ flutter run
 - [ ] Docker containerization
 - [ ] Cloud deployment (AWS/Azure)
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch
@@ -306,10 +306,10 @@ flutter run
 4. Test thoroughly
 5. Submit a pull request
 
-## 📝 License
+## License
 
 This project is created for educational purposes as part of an internship assignment.
 
-## 📞 Support
+## Support
 
 For questions or issues, please refer to the individual README files in the `backend/` and `mobile/` directories for detailed setup instructions.
