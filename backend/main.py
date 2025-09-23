@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
-from pymongo import MongoClient
+from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel
 from pydantic.networks import EmailStr
 from passlib.context import CryptContext
@@ -34,18 +34,18 @@ SECRET_KEY = os.getenv("SECRET_KEY", "fallback-secret-key")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
 
-# MongoDB connection
-MONGODB_URL = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
+# MongoDB (Cosmos DB Mongo API) connection
+MONGODB_URL = os.getenv("MONGODB_URL")  # store full cosmos connection string here
 DATABASE_NAME = os.getenv("DATABASE_NAME", "pet_management")
 
 try:
-    client = MongoClient(MONGODB_URL)
+    client = AsyncIOMotorClient(MONGODB_URL, tls=True, tlsAllowInvalidCertificates=False)
     db = client[DATABASE_NAME]
     users_collection = db.users
     pets_collection = db.pets
-    print("Connected to MongoDB successfully")
+    print("✅ Connected to Cosmos DB successfully")
 except Exception as e:
-    print(f"Error connecting to MongoDB: {e}")
+    print(f"❌ Error connecting to Cosmos DB: {e}")
 
 
 # Pydantic models
@@ -91,16 +91,13 @@ def get_password_hash(password):
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
+    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=15))
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
 
-def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -115,7 +112,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
     except JWTError:
         raise credentials_exception
 
-    user = users_collection.find_one({"email": email})
+    user = await users_collection.find_one({"email": email})
     if user is None:
         raise credentials_exception
     return user
@@ -129,13 +126,11 @@ async def root():
 
 @app.post("/auth/register", response_model=Token)
 async def register(user: UserRegister):
-    # Check if user already exists
-    if users_collection.find_one({"email": user.email}):
+    if await users_collection.find_one({"email": user.email}):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered"
         )
 
-    # Create new user
     hashed_password = get_password_hash(user.password)
     user_doc = {
         "email": user.email,
@@ -143,9 +138,8 @@ async def register(user: UserRegister):
         "created_at": datetime.utcnow(),
     }
 
-    result = users_collection.insert_one(user_doc)
+    await users_collection.insert_one(user_doc)
 
-    # Create access token
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user.email}, expires_delta=access_token_expires
@@ -156,8 +150,7 @@ async def register(user: UserRegister):
 
 @app.post("/auth/login", response_model=Token)
 async def login(user: UserLogin):
-    # Authenticate user
-    db_user = users_collection.find_one({"email": user.email})
+    db_user = await users_collection.find_one({"email": user.email})
     if not db_user or not verify_password(user.password, db_user["hashed_password"]):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -165,7 +158,6 @@ async def login(user: UserLogin):
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # Create access token
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user.email}, expires_delta=access_token_expires
@@ -176,22 +168,20 @@ async def login(user: UserLogin):
 
 @app.get("/pets", response_model=List[PetResponse])
 async def get_pets(current_user: dict = Depends(get_current_user)):
-    pets = list(pets_collection.find({"owner_id": str(current_user["_id"])}))
+    pets_cursor = pets_collection.find({"owner_id": str(current_user["_id"])})
+    pets = await pets_cursor.to_list(100)
 
-    pets_response = []
-    for pet in pets:
-        pets_response.append(
-            PetResponse(
-                id=str(pet["_id"]),
-                name=pet["name"],
-                type=pet["type"],
-                age=pet["age"],
-                notes=pet.get("notes", ""),
-                owner_id=pet["owner_id"],
-            )
+    return [
+        PetResponse(
+            id=str(pet["_id"]),
+            name=pet["name"],
+            type=pet["type"],
+            age=pet["age"],
+            notes=pet.get("notes", ""),
+            owner_id=pet["owner_id"],
         )
-
-    return pets_response
+        for pet in pets
+    ]
 
 
 @app.post("/pets", response_model=PetResponse)
@@ -205,7 +195,7 @@ async def add_pet(pet: Pet, current_user: dict = Depends(get_current_user)):
         "created_at": datetime.utcnow(),
     }
 
-    result = pets_collection.insert_one(pet_doc)
+    result = await pets_collection.insert_one(pet_doc)
 
     return PetResponse(
         id=str(result.inserted_id),
